@@ -21,6 +21,7 @@ SEND_CMD>"at !reset"
 #END_CMD is required to indicate EOF execution
 END_CMD>
 
+#these scripts are here for reference only
 [SIERRAKEYGEN-MODEL]
 MDM8200=1
 MDM9200=2
