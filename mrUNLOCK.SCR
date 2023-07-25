@@ -1,0 +1,76 @@
+IP>"192.168.1.1"
+PORT>"5510"
+SG_MODEL>"10"
+SEND_CMD>"at !openlock?"
+CMD_ECHO>"ignore"
+PUSH_SG_CMD_RESPONSE_STR>"openlock"
+POPUP_SG_SEND_CMD_STR>"at !openlock="%s""
+CMD_SG_STATUS>"OK"
+SEND_CMD>"at !TELEN=1"
+CMD_ECHO>"ignore"
+CMD_STATUS>"ignore"
+SEND_CMD>"at !custom="RDENBLE",1"
+CMD_ECHO>"ignore"
+CMD_STATUS>"ignore"
+SEND_CMD>"at !custom="TELNETENABLE",1"
+CMD_ECHO>"ignore"
+CMD_STATUS>"ignore"
+DELAY>"5"
+SEND_CMD>"at !reset"
+#END_CMD is required to indicate EOF execution
+END_CMD>
+
+[SIERRAKEYGEN-MODEL]
+MDM8200=1
+MDM9200=2
+MDM9200_V1=3
+MDM9200_V2=4
+MDM9200_V3=5
+MDM9x15=6
+MDM9x07=7
+MDM9x30=8
+MDM9x30_V1=9
+MDM9x40=10
+MDM9x50=11
+MDM9x06=12
+SDX55=13
+#Old FW
+SDX65=14
+MDM9x15A=15
+SDX62=16
+#New FW
+SDX65_NG=17
+
+[UNLOCK-TELNET]
+SEND_CMD>"at !openlock?"
+CMD_ECHO>"ignore"
+PUSH_SG_CMD_RESPONSE_STR>"openlock"
+POPUP_SG_SEND_CMD_STR>"at !openlock="%s""
+CMD_SG_STATUS>"OK"
+SEND_CMD>"at !TELEN=1"
+CMD_ECHO>"ignore"
+CMD_STATUS>"ignore"
+SEND_CMD>"at !custom="RDENBLE",1"
+CMD_ECHO>"ignore"
+CMD_STATUS>"ignore"
+SEND_CMD>"at !custom="TELNETENABLE",1"
+CMD_ECHO>"ignore"
+CMD_STATUS>"ignore"
+DELAY>"5"
+SEND_CMD>"at !reset"
+
+[SIM-UNLOCK]
+SEND_CMD>"at !openlock?"
+CMD_ECHO>"ignore"
+PUSH_SG_CMD_RESPONSE_STR>"openlock"
+POPUP_SG_SEND_CMD_STR>"at !openlock="%s""
+CMD_SG_STATUS>"OK"
+SEND_CMD>"at !openmep?"
+CMD_ECHO>"ignore"
+PUSH_SG_CMD_RESPONSE_STR>"openmep"
+POPUP_SG_SEND_CMD_STR>"at !openmep="%s""
+CMD_SG_STATUS>"OK"
+SEND_CMD>"at !NVMEPRST"
+CMD_ECHO>"ignore"
+DELAY>"5"
+SEND_CMD>"at !reset"
