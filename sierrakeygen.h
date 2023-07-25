@@ -4,7 +4,7 @@
 #
 # !!!!! If you use this code in commercial products, your product is automatically
 # GPLv3 and has to be open sourced under GPLv3 as well. !!!!!
-#
+# https://github.com/bkerler/edl
 # This is a derived code from sierrakeygen.py done by B.Kerler, remained same license term as GPLv3
 */
 #ifndef NULL_CHAR
