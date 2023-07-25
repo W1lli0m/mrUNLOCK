@@ -9,4 +9,4 @@ For those who looking for IMEI repairing, you need to study how to apply this to
 
 Author takes no liability for applying this tool to your device.
 
-This repository was created with VS2019, built binary provided for reference
+This repository was created with VS2019, built binary provided for reference. It might require vcruntime140.dll.
