@@ -1,6 +1,7 @@
 IP>"192.168.1.1"
 PORT>"5510"
 SG_MODEL>"10"
+#Apply corresponding commands from here
 SEND_CMD>"at !openlock?"
 CMD_ECHO>"ignore"
 PUSH_SG_CMD_RESPONSE_STR>"openlock"
