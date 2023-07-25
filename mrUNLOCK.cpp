@@ -8,7 +8,6 @@
 #define _CRT_SECURE_NO_WARNINGS
 #define _WINSOCK_DEPRECATED_NO_WARNINGS
 
-#define _BUILD_APP_
 #pragma warning(disable:6011) 
 
 
@@ -217,7 +216,7 @@ int __cdecl main(int argc, char** argv)
     char* tP=NULL,*tPP=NULL;
     int sendLEN = 0;
 
-    printf("\nmrUNLOCK v1.00\n\n");
+    printf("\nmrUNLOCK v1.01\n\n");
     fopen_s(&pFile, "mrUNLOCK.SCR", "rb");
     if (pFile == NULL) {
         printf("\007\nScript file mrUNLOCK.SCR open error\n");
@@ -240,7 +239,7 @@ int __cdecl main(int argc, char** argv)
         }
         else if ((tOffset = _a_stricmp(pBuffer, (char*)"SG_MODEL>")) != -1) {
             SGModel=atoi(RetrieveSCRDATAString(pBuffer + tOffset));
-            printf("SGModel=%d\n", SGModel);
+            //printf("SGModel=%d\n", SGModel);
             sgAVAIL = TRUE;
             while (TRUE) {
                 if (sKGP->chipGeneration == SIERRA_KEY_NOTFOUND) {
@@ -254,6 +253,10 @@ int __cdecl main(int argc, char** argv)
                         sKGP++;
                 }
             }
+            if (sKGP==NULL)
+                printf("SGModel=%d\n", SGModel);
+            else
+                printf("SGModel=%s\n", (sTBL + SGModel)->keyName);
         }
         else if (ipAVAIL && portAVAIL && sgAVAIL) {
             if (!socketAVAIL) {
@@ -293,6 +296,11 @@ int __cdecl main(int argc, char** argv)
                 }
                 socketAVAIL = TRUE;
                 printf("\r                                                    \r");
+                if (cSocket == SOCKET_ERROR) {
+                    printf("\n\007Can't connect to the device, program aborting.....\n");
+                    goto _CLOSE_SOCKET;
+                }
+
             }
 
             if ((tOffset = _a_stricmp(pBuffer, (char*)"SEND_CMD>")) != -1) {
@@ -354,6 +362,12 @@ int __cdecl main(int argc, char** argv)
             }
         }
     }
+    if (!ipAVAIL)
+        printf("\n\007No device IP specified\n");
+    if (!portAVAIL)
+        printf("\n\007No Port number specified for the device\n");
+    if (!sgAVAIL)
+        printf("\n\007No sierrakeygen model specified\n");
 _CLOSE_SOCKET:
     closesocket(cSocket);
 _CLOSE_WINSOCK:
