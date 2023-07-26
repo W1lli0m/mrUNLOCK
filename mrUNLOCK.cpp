@@ -234,7 +234,7 @@ int __cdecl main(int argc, char** argv)
     char* tP=NULL,*tPP=NULL;
     int sendLEN = 0;
     int index = 1;
-    printf("\nmrUNLOCK v1.10\n\n");
+    printf("\nmrUNLOCK v1.11\n\n");
 
     if (argc > 1) {
         do {
@@ -314,7 +314,7 @@ int __cdecl main(int argc, char** argv)
             else
                 printf("SGModel=%s\n", (sTBL + SGModel)->keyName);
         }
-        else if (ipAVAIL && portAVAIL && sgAVAIL) {
+        else {
             if (!socketAVAIL) {
                 printf("\nInitializing WINSOCK.....");
                 iResult = WSAStartup(MAKEWORD(2, 2), &wsaData);
@@ -417,10 +417,6 @@ int __cdecl main(int argc, char** argv)
             }
         }
     }
-    if (!ipAVAIL)
-        printf("\n\007No device IP specified\n");
-    if (!portAVAIL)
-        printf("\n\007No Port number specified for the device\n");
     if (!sgAVAIL)
         printf("\n\007No sierrakeygen model specified\n");
 _CLOSE_SOCKET:
