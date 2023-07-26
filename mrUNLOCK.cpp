@@ -42,6 +42,7 @@ BOOL    ipAVAIL = FALSE;
 BOOL    portAVAIL = FALSE;
 BOOL    sgAVAIL = FALSE;
 BOOL    socketAVAIL = FALSE;
+BOOL    bScriptSectionFound = FALSE;
 WSADATA wsaData;
 int iResult;
 int tOffset;
@@ -52,7 +53,10 @@ char    pBuffer[1024] = { 0x00 };
 char    keyChallenge[64] = { 0x00 };
 char    keyPassphrase[64] = { 0x00 };
 unsigned char vTable[16] = { 0x00 };
-const char    ascii0toF[] = "0123456789ABCDEF"; // 16] = { '0','1','2','3','4','5','6','7','8','9','A','B','C','D','E','F' };
+const char    ascii0toF[] = "0123456789ABCDEF";
+char    runScript[64] = { 0x00 };
+sierraKeyModelSTRUCT* sTBL = sierraKeyModelTBL;
+sierraProdTable* sKGP = sierraProd;
 
 
 int _a_stricmp(char* str1, char* str2);
@@ -63,6 +67,23 @@ void hexString2Bytes(unsigned char* bBUF, int length);
 BOOL IsDigits(char cP);
 BOOL IsAlphaHex(char cP);
 BOOL IsAlpha(char cP);
+void upDateSGMInfo(int sgm);
+
+void upDateSGMInfo(int sgm)
+{
+    while (TRUE) {
+        if (sKGP->chipGeneration == SIERRA_KEY_NOTFOUND) {
+            sKGP = (sierraProdTable*)NULL;
+            break;
+        }
+        else {
+            if (sKGP->chipGeneration == (sTBL + sgm)->keyModel)
+                break;
+            else
+                sKGP++;
+        }
+    }
+}
 
 BOOL IsAlpha(char cP)
 {
@@ -208,52 +229,87 @@ char *truncateString(char* str)
     }
 }
 
-sierraKeyModelSTRUCT* sTBL = sierraKeyModelTBL;
-sierraProdTable* sKGP = sierraProd;
-
 int __cdecl main(int argc, char** argv)
 {
     char* tP=NULL,*tPP=NULL;
     int sendLEN = 0;
+    int index = 1;
+    printf("\nmrUNLOCK v1.10\n\n");
 
-    printf("\nmrUNLOCK v1.01\n\n");
+    if (argc > 1) {
+        do {
+            if (_stricmp("-run", argv[index]) == 0) {
+                char* sP = argv[index + 1];
+                char* tP = runScript;
+                *tP++ = '[';
+                while (*sP != NULL_CHAR) {
+                    if (*sP == '\"')
+                        sP++;
+                    else
+                        *tP++ = *sP++;
+                }
+                *tP++ = ']';
+                *tP = NULL_CHAR;
+            }
+            else if (_stricmp("-sgm", argv[index]) == 0) {
+                SGModel = atoi(argv[index + 1]);
+            }
+            else if (_stricmp("-ip", argv[index]) == 0) {
+                strcpy(devIPAddress, argv[index + 1]);
+                ipAVAIL = TRUE;
+            }
+            else if (_stricmp("-port", argv[index]) == 0) {
+                strcpy(atPort, argv[index + 1]);
+                portAVAIL = TRUE;
+            }
+
+        } while (++index < argc);
+    }
     fopen_s(&pFile, "mrUNLOCK.SCR", "rb");
     if (pFile == NULL) {
         printf("\007\nScript file mrUNLOCK.SCR open error\n");
         exit(-1);
     }
     fseek(pFile, 0L, SEEK_SET);
+    if (strlen(runScript) > 0) {
+        while (!feof(pFile)) {
+            fgets((char*)pBuffer, 1024, pFile);
+            if ((tOffset = _a_stricmp(pBuffer, runScript)) != -1) {
+                bScriptSectionFound = TRUE;
+                break;
+            }
+        }
+        if (!bScriptSectionFound)
+            fseek(pFile, 0L, SEEK_SET);
+    }
+    if (SGModel != 0) {
+        upDateSGMInfo(SGModel);
+        if (sKGP == NULL)
+            printf("SGModel=%d\n", SGModel);
+        else {
+            printf("SGModel=%s\n", (sTBL + SGModel)->keyName);
+            sgAVAIL = TRUE;
+        }
+    }
     while (!feof(pFile)) {
         fgets((char*)pBuffer, 1024, pFile);
         if (*pBuffer == '#')
             continue;
-        if ((tOffset = _a_stricmp(pBuffer, (char*)"IP>")) != -1) {
+        if ((!ipAVAIL) && (tOffset = _a_stricmp(pBuffer, (char*)"IP>")) != -1) {
             strcpy(devIPAddress, RetrieveSCRDATAString(pBuffer + tOffset));
             printf("IP=%s\n",devIPAddress);
             ipAVAIL = TRUE;
         }
-        else if ((tOffset = _a_stricmp(pBuffer, (char*)"PORT>")) != -1) {
+        else if ((!portAVAIL) && (tOffset = _a_stricmp(pBuffer, (char*)"PORT>")) != -1) {
             strcpy(atPort, RetrieveSCRDATAString(pBuffer + tOffset));
             printf("atPort=%s\n", atPort);
             portAVAIL = TRUE;
         }
-        else if ((tOffset = _a_stricmp(pBuffer, (char*)"SG_MODEL>")) != -1) {
-            SGModel=atoi(RetrieveSCRDATAString(pBuffer + tOffset));
-            //printf("SGModel=%d\n", SGModel);
+        else if ((!sgAVAIL) && (tOffset = _a_stricmp(pBuffer, (char*)"SG_MODEL>")) != -1) {
+            SGModel = atoi(RetrieveSCRDATAString(pBuffer + tOffset));
             sgAVAIL = TRUE;
-            while (TRUE) {
-                if (sKGP->chipGeneration == SIERRA_KEY_NOTFOUND) {
-                    sKGP = (sierraProdTable*)NULL;
-                    break;
-                }
-                else {
-                    if (sKGP->chipGeneration == (sTBL + SGModel)->keyModel) 
-                        break;
-                    else 
-                        sKGP++;
-                }
-            }
-            if (sKGP==NULL)
+            upDateSGMInfo(SGModel);
+            if (sKGP == NULL)
                 printf("SGModel=%d\n", SGModel);
             else
                 printf("SGModel=%s\n", (sTBL + SGModel)->keyName);
@@ -294,13 +350,12 @@ int __cdecl main(int argc, char** argv)
                     }
                     break;
                 }
-                socketAVAIL = TRUE;
                 printf("\r                                                    \r");
                 if (cSocket == SOCKET_ERROR) {
                     printf("\n\007Can't connect to the device, program aborting.....\n");
                     goto _CLOSE_SOCKET;
                 }
-
+                socketAVAIL = TRUE;
             }
 
             if ((tOffset = _a_stricmp(pBuffer, (char*)"SEND_CMD>")) != -1) {
