@@ -44,6 +44,7 @@ SDX62=16
 SDX65_NG=17
 
 [UNLOCK-TELNET]
+SG_MODEL>"10"
 SEND_CMD>"at !openlock?"
 CMD_ECHO>"ignore"
 PUSH_SG_CMD_RESPONSE_STR>"openlock"
@@ -63,6 +64,7 @@ SEND_CMD>"at !reset"
 END_CMD>
 
 [SIM-UNLOCK]
+SG_MODEL>"10"
 SEND_CMD>"at !openlock?"
 CMD_ECHO>"ignore"
 PUSH_SG_CMD_RESPONSE_STR>"openlock"
