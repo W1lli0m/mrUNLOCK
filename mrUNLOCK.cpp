@@ -177,14 +177,14 @@ int _a_stricmp(char* str1, char* str2)
              return ((int)(s1 - str1));
         else if (UpperCase(*s1) != UpperCase(*s2))
             break;
-        else if (*s2 == NULL_CHAR)
-            return s1 - str1;
         else if (*s1 == NULL_CHAR)
             break;
         else {
             s1++;
             s2++;
-            if (*s1 == NULL_CHAR)
+            if ((*s1 == NULL_CHAR) && (*s2 == NULL))
+                return ((int)(s1 - str1));
+            else if (*s1==NULL)
                 break;
         }
     }
@@ -234,7 +234,7 @@ int __cdecl main(int argc, char** argv)
     char* tP=NULL,*tPP=NULL;
     int sendLEN = 0;
     int index = 1;
-    printf("\nmrUNLOCK v1.11\n\n");
+    printf("\nmrUNLOCK v1.12\n\n");
 
     if (argc > 1) {
         do {
@@ -253,6 +253,12 @@ int __cdecl main(int argc, char** argv)
             }
             else if (_stricmp("-sgm", argv[index]) == 0) {
                 SGModel = atoi(argv[index + 1]);
+                sgAVAIL = TRUE;
+                upDateSGMInfo(SGModel);
+                if (sKGP == NULL)
+                    printf("SGModel=%d\n", SGModel);
+                else
+                    printf("SGModel=%s\n", (sTBL + SGModel)->keyName);
             }
             else if (_stricmp("-ip", argv[index]) == 0) {
                 strcpy(devIPAddress, argv[index + 1]);
@@ -282,15 +288,7 @@ int __cdecl main(int argc, char** argv)
         if (!bScriptSectionFound)
             fseek(pFile, 0L, SEEK_SET);
     }
-    if (SGModel != 0) {
-        upDateSGMInfo(SGModel);
-        if (sKGP == NULL)
-            printf("SGModel=%d\n", SGModel);
-        else {
-            printf("SGModel=%s\n", (sTBL + SGModel)->keyName);
-            sgAVAIL = TRUE;
-        }
-    }
+ 
     while (!feof(pFile)) {
         fgets((char*)pBuffer, 1024, pFile);
         if (*pBuffer == '#')
@@ -356,6 +354,20 @@ int __cdecl main(int argc, char** argv)
                     goto _CLOSE_SOCKET;
                 }
                 socketAVAIL = TRUE;
+                if (!sgAVAIL) {
+                    upDateSGMInfo(SGModel);
+                    if (sKGP == NULL)
+                        printf("SGModel=%d\n", SGModel);
+                    else {
+                        printf("SGModel=%s\n", (sTBL + SGModel)->keyName);
+                        sgAVAIL = TRUE;
+                    }
+                }
+                if (!ipAVAIL)
+                    printf("IP=%s\n", devIPAddress);
+                if (!portAVAIL)
+                    printf("atPort=%s\n", atPort);
+                printf("\n");
             }
 
             if ((tOffset = _a_stricmp(pBuffer, (char*)"SEND_CMD>")) != -1) {
@@ -382,11 +394,12 @@ int __cdecl main(int argc, char** argv)
 
                 recv(cSocket, socketBuffer, 1024, 0);
                 tPP=truncateString(socketBuffer);
-                strcpy(keyChallenge, tPP);
                 if (_strnicmp(tPP, (char*)"ERROR",5) == 0) {
                     printf("Retrieving challenge ERROR\n");
                     goto _CLOSE_SOCKET;
                 }
+                else
+                    strcpy(keyChallenge, tPP);
             }
             else if ((tOffset = _a_stricmp(pBuffer, (char*)"POPUP_SG_SEND_CMD_STR>")) != -1) {
                 SierraGenerator(sKGP, (unsigned char*)keyChallenge);
@@ -402,8 +415,10 @@ int __cdecl main(int argc, char** argv)
                 recv(cSocket, socketBuffer, 1024, 0);
                 if (_a_searchString(socketBuffer, tP, TRUE))
                     printf("CMD_SG_STATUS matched [%s]\n", tP);
-                else if (_a_searchString(socketBuffer, "ERROR", TRUE))
+                else if (_a_searchString(socketBuffer, "ERROR", TRUE)) {
                     printf("CMD_SG_STATUS ERROR\n");
+                    goto _CLOSE_SOCKET;
+                }
             }
             else if ((tOffset = _a_stricmp(pBuffer, (char*)"DELAY>")) != -1) {
                 int delayS= atoi(RetrieveSCRDATAString(pBuffer + tOffset));
@@ -412,7 +427,7 @@ int __cdecl main(int argc, char** argv)
                 printf("\r                         \r");
             }
             else if ((tOffset = _a_stricmp(pBuffer, (char*)"END_CMD>")) != -1) {
-                printf("Process completed\n");
+                printf("\nProcess completed\n");
                 break;
             }
         }
