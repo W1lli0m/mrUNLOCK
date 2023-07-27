@@ -22,11 +22,12 @@
 #include <string.h>
 #include <time.h>
 #include <ctype.h>
-#include "sierrakeygen.h"
+#include "iSG.h"
 
 #pragma comment (lib, "Ws2_32.lib")
 #pragma comment (lib, "Mswsock.lib")
 #pragma comment (lib, "AdvApi32.lib")
+#pragma comment (lib, "iSG.lib")
 
 #define NULL_CHAR   0x00
 #define CR          0x0d
@@ -47,6 +48,7 @@ WSADATA wsaData;
 int iResult;
 int tOffset;
 int SGModel = 0;
+int keyType=0;
 char    socketBuffer[1024];
 _Post_ _Notnull_ FILE* pFile = NULL;
 char    pBuffer[1024] = { 0x00 };
@@ -55,35 +57,15 @@ char    keyPassphrase[64] = { 0x00 };
 unsigned char vTable[16] = { 0x00 };
 const char    ascii0toF[] = "0123456789ABCDEF";
 char    runScript[64] = { 0x00 };
-sierraKeyModelSTRUCT* sTBL = sierraKeyModelTBL;
-sierraProdTable* sKGP = sierraProd;
-
 
 int _a_stricmp(char* str1, char* str2);
 char UpperCase(char t);
 char* RetrieveSCRDATAString(char* sBuffer);
-void bytes2HexString(unsigned char* bBUF);
-void hexString2Bytes(unsigned char* bBUF, int length);
 BOOL IsDigits(char cP);
 BOOL IsAlphaHex(char cP);
 BOOL IsAlpha(char cP);
-void upDateSGMInfo(int sgm);
 
-void upDateSGMInfo(int sgm)
-{
-    while (TRUE) {
-        if (sKGP->chipGeneration == SIERRA_KEY_NOTFOUND) {
-            sKGP = (sierraProdTable*)NULL;
-            break;
-        }
-        else {
-            if (sKGP->chipGeneration == (sTBL + sgm)->keyModel)
-                break;
-            else
-                sKGP++;
-        }
-    }
-}
+
 
 BOOL IsAlpha(char cP)
 {
@@ -100,28 +82,6 @@ BOOL IsAlphaHex(char cP)
     return ((UpperCase(cP) >= 'A') && (UpperCase(cP) <= 'F'));
 }
 
-void bytes2HexString(unsigned char* bValue)
-{
-    for (int i = 0; i < 8; i++)
-        vTable[i] = *(bValue + i);
-
-    for (int i = 0; i < 8; i++) {
-        *(bValue + (i * 2)) = ascii0toF[(vTable[i] >> 4) & 0x0F];
-        *(bValue + (i * 2) + 1) = ascii0toF[vTable[i] & 0x0F];
-    }
-}
-
-void hexString2Bytes(unsigned char* strChallenge, int length)
-{
-    for (int i = 0; i < length; i++)
-        vTable[i] = IsAlphaHex(*(strChallenge + i)) ? UpperCase(*(strChallenge + i)) : *(strChallenge + i);
-    for (int i = 0; i < (length / 2); i++) {
-        *(strChallenge + i) = IsAlphaHex(vTable[i * 2]) ? ((vTable[i * 2] - 'A' + 10) * 16) : ((vTable[i * 2] - '0') * 16);
-        *(strChallenge + i) += IsAlphaHex(vTable[i * 2 + 1]) ? (vTable[i * 2 + 1] - 'A' + 10) : (vTable[i * 2 + 1] - '0');
-    }
-    for (int i = (length / 2); i < length; i++)
-        *(strChallenge + i) = 0x00;
-}
 char UpperCase(char t)
 {
     if ((t >= 'a') && (t <= 'z'))
@@ -234,7 +194,7 @@ int __cdecl main(int argc, char** argv)
     char* tP=NULL,*tPP=NULL;
     int sendLEN = 0;
     int index = 1;
-    printf("\nmrUNLOCK v1.12\n\n");
+    printf("\nmrUNLOCK v1.20\n\n");
 
     if (argc > 1) {
         do {
@@ -254,11 +214,6 @@ int __cdecl main(int argc, char** argv)
             else if (_stricmp("-sgm", argv[index]) == 0) {
                 SGModel = atoi(argv[index + 1]);
                 sgAVAIL = TRUE;
-                upDateSGMInfo(SGModel);
-                if (sKGP == NULL)
-                    printf("SGModel=%d\n", SGModel);
-                else
-                    printf("SGModel=%s\n", (sTBL + SGModel)->keyName);
             }
             else if (_stricmp("-ip", argv[index]) == 0) {
                 strcpy(devIPAddress, argv[index + 1]);
@@ -295,22 +250,17 @@ int __cdecl main(int argc, char** argv)
             continue;
         if ((!ipAVAIL) && (tOffset = _a_stricmp(pBuffer, (char*)"IP>")) != -1) {
             strcpy(devIPAddress, RetrieveSCRDATAString(pBuffer + tOffset));
-            printf("IP=%s\n",devIPAddress);
+            //printf("IP=%s\n",devIPAddress);
             ipAVAIL = TRUE;
         }
         else if ((!portAVAIL) && (tOffset = _a_stricmp(pBuffer, (char*)"PORT>")) != -1) {
             strcpy(atPort, RetrieveSCRDATAString(pBuffer + tOffset));
-            printf("atPort=%s\n", atPort);
+            //printf("atPort=%s\n", atPort);
             portAVAIL = TRUE;
         }
         else if ((!sgAVAIL) && (tOffset = _a_stricmp(pBuffer, (char*)"SG_MODEL>")) != -1) {
             SGModel = atoi(RetrieveSCRDATAString(pBuffer + tOffset));
             sgAVAIL = TRUE;
-            upDateSGMInfo(SGModel);
-            if (sKGP == NULL)
-                printf("SGModel=%d\n", SGModel);
-            else
-                printf("SGModel=%s\n", (sTBL + SGModel)->keyName);
         }
         else {
             if (!socketAVAIL) {
@@ -355,18 +305,13 @@ int __cdecl main(int argc, char** argv)
                 }
                 socketAVAIL = TRUE;
                 if (!sgAVAIL) {
-                    upDateSGMInfo(SGModel);
-                    if (sKGP == NULL)
-                        printf("SGModel=%d\n", SGModel);
-                    else {
-                        printf("SGModel=%s\n", (sTBL + SGModel)->keyName);
-                        sgAVAIL = TRUE;
-                    }
+                    printf("\n\007No sierrakeygen model specified\n");
+                    goto _CLOSE_SOCKET;
                 }
-                if (!ipAVAIL)
-                    printf("IP=%s\n", devIPAddress);
-                if (!portAVAIL)
-                    printf("atPort=%s\n", atPort);
+                else
+                    printf("Sierrakey Model = %d\n", SGModel);
+                printf("IP=%s\n", devIPAddress);
+                printf("atPort=%s\n", atPort);
                 printf("\n");
             }
 
@@ -384,13 +329,13 @@ int __cdecl main(int argc, char** argv)
             else if ((tOffset = _a_stricmp(pBuffer, (char*)"PUSH_SG_CMD_RESPONSE_STR>")) != -1) {
                 tP = RetrieveSCRDATAString(pBuffer + tOffset);
                 if (_strnicmp(tP, (char*)"openlock", strlen("openlock")) == 0)
-                    sKGP->keyType = SIERRA_KEYTYPE_OPENLOCK;
+                    keyType = SIERRA_KEYTYPE_OPENLOCK;
                 else if (_strnicmp(tP, (char*)"openmep", strlen("openmep")) == 0)
-                    sKGP->keyType = SIERRA_KEYTYPE_OPENMEP;
+                    keyType = SIERRA_KEYTYPE_OPENMEP;
                 else if (_strnicmp(tP, (char*)"opencnd", strlen("opencnd")) == 0)
-                    sKGP->keyType = SIERRA_KEYTYPE_OPENCND;
+                    keyType = SIERRA_KEYTYPE_OPENCND;
                 else
-                    sKGP->keyType = SIERRA_KEYTYPE_OPENLOCK;
+                    keyType = SIERRA_KEYTYPE_OPENLOCK;
 
                 recv(cSocket, socketBuffer, 1024, 0);
                 tPP=truncateString(socketBuffer);
@@ -402,9 +347,9 @@ int __cdecl main(int argc, char** argv)
                     strcpy(keyChallenge, tPP);
             }
             else if ((tOffset = _a_stricmp(pBuffer, (char*)"POPUP_SG_SEND_CMD_STR>")) != -1) {
-                SierraGenerator(sKGP, (unsigned char*)keyChallenge);
+                iSG(keyChallenge, keyPassphrase, SGModel, keyType);
                 tP= RetrieveSCRDATAString(pBuffer + tOffset);
-                sprintf(socketBuffer, tP, sKGP->sierraKeys);
+                sprintf(socketBuffer, tP, keyPassphrase);
                 strcat(socketBuffer, "\r");
                 sendLEN = strlen(socketBuffer);
                 send(cSocket, socketBuffer, sendLEN, 0);
