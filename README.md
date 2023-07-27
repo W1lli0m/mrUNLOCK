@@ -11,4 +11,4 @@ Author takes no liability for applying this tool to your device.
 
 This repository was created with VS2019, built binary/dll provided for reference. It might require vcruntime140.dll.
 
-v1.20, and onward, will be going with DLL form to call sierragkeygen function. When sierrakeygen algorithm changed, only update DLL to get extra/updated keygen supported
+v1.20, and onward, will be going with DLL form to call sierragkeygen function. When sierrakeygen algorithm changed, only need to update DLL for getting extra/updated keygen supported
