@@ -1,6 +1,6 @@
 to do Telnet unlock -
 
-mrUNLOCK -run "TELNET-UNLOCK" -sgm xx
+mrUNLOCK -run "UNLOCK-TELNET" -sgm xx
 
 where sgm is the device model, please refer to mrUNLOCK.SCR
 
