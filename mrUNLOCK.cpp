@@ -27,7 +27,15 @@
 #pragma comment (lib, "Ws2_32.lib")
 #pragma comment (lib, "Mswsock.lib")
 #pragma comment (lib, "AdvApi32.lib")
+#ifdef _arm64ec_BUILD_
+#pragma comment (lib, "iSG-arm64ec.lib")
+#else
+#ifdef _x64_BUILD_
+#pragma comment (lib, "iSG-x64.lib")
+#else
 #pragma comment (lib, "iSG.lib")
+#endif
+#endif
 
 #define NULL_CHAR   0x00
 #define CR          0x0d
@@ -194,7 +202,7 @@ int __cdecl main(int argc, char** argv)
     char* tP=NULL,*tPP=NULL;
     int sendLEN = 0;
     int index = 1;
-    printf("\nmrUNLOCK v1.20\n\n");
+    printf("\nmrUNLOCK v1.21\n\n");
 
     if (argc > 1) {
         do {
@@ -343,6 +351,10 @@ int __cdecl main(int argc, char** argv)
                 }
                 else
                     strcpy(keyChallenge, tPP);
+            }
+            else if ((tOffset = _a_stricmp(pBuffer, (char*)"SET_SG_KEYTYPE>")) != -1) {
+                keyType = atoi(RetrieveSCRDATAString(pBuffer + tOffset));
+                printf("KeyType set as %d\n", keyType);
             }
             else if ((tOffset = _a_stricmp(pBuffer, (char*)"POPUP_SG_SEND_CMD_STR>")) != -1) {
                 iSG(keyChallenge, keyPassphrase, SGModel, keyType);
