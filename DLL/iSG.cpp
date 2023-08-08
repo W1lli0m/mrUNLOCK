@@ -98,3 +98,8 @@ void iSG(char *strChallenge, char *strPassphrase,int keyModel,int keyType)
         *tP++ = *sP++;
     *tP = NULL_CHAR;
 }
+
+WORD iSG_Version()
+{
+    return (0x0100);
+}
