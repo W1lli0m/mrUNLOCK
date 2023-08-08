@@ -56,7 +56,8 @@ WSADATA wsaData;
 int iResult;
 int tOffset;
 int SGModel = 0;
-int keyType=0;
+int keyType=-1;
+int curKeyType = -1;
 char    socketBuffer[1024];
 _Post_ _Notnull_ FILE* pFile = NULL;
 char    pBuffer[1024] = { 0x00 };
@@ -202,7 +203,8 @@ int __cdecl main(int argc, char** argv)
     char* tP=NULL,*tPP=NULL;
     int sendLEN = 0;
     int index = 1;
-    printf("\nmrUNLOCK v1.21\n\n");
+    WORD isgVersion = iSG_Version();
+    printf("\nmrUNLOCK v1.22 (iSG version: %d.%02d)\n\n",(isgVersion & 0xFF00) >> 8, (isgVersion & 0x00FF));
 
     if (argc > 1) {
         do {
@@ -341,8 +343,16 @@ int __cdecl main(int argc, char** argv)
                 else if (_strnicmp(tP, (char*)"opencnd", strlen("opencnd")) == 0)
                     keyType = SIERRA_KEYTYPE_OPENCND;
                 else
-                    keyType = SIERRA_KEYTYPE_OPENLOCK;
-
+                    keyType = atoi(tP);
+                if (curKeyType == -1)
+                    printf("KeyType set as %d\n", keyType);
+                else {
+                    if (curKeyType == keyType)
+                        printf("KeyType set as %d\n", keyType);
+                    else
+                        printf("KeyType overrided as %d\n", keyType);
+                }
+                curKeyType = keyType;
                 recv(cSocket, socketBuffer, 1024, 0);
                 tPP=truncateString(socketBuffer);
                 if (_strnicmp(tPP, (char*)"ERROR",5) == 0) {
@@ -354,7 +364,15 @@ int __cdecl main(int argc, char** argv)
             }
             else if ((tOffset = _a_stricmp(pBuffer, (char*)"SET_SG_KEYTYPE>")) != -1) {
                 keyType = atoi(RetrieveSCRDATAString(pBuffer + tOffset));
-                printf("KeyType set as %d\n", keyType);
+                if (curKeyType == -1)
+                    printf("KeyType set as %d\n", keyType);
+                else {
+                    if (curKeyType==keyType)
+                        printf("KeyType set as %d\n",keyType);
+                    else
+                        printf("KeyType overrided as %d\n", keyType);
+                }
+                curKeyType = keyType;
             }
             else if ((tOffset = _a_stricmp(pBuffer, (char*)"POPUP_SG_SEND_CMD_STR>")) != -1) {
                 iSG(keyChallenge, keyPassphrase, SGModel, keyType);
