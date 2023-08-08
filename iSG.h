@@ -9,7 +9,7 @@ extern "C" {
 #define SIERRA_KEYTYPE_OPENCND          2
 #endif
 	__declspec(dllexport) void iSG(char* strChallenge, char* strPassphrase,int keyModel,int keyType);
-
+	__declspec(dllexport) WORD iSG_Version();
 #ifdef __cplusplus  
 }
 #endif  
