@@ -84,3 +84,17 @@ CMD_ECHO>"ignore"
 DELAY>"5"
 SEND_CMD>"at !reset"
 END_CMD>
+
+[SET-CND-KEY]
+IP>"192.168.1.1"
+PORT>"5510"
+SEND_CMD>"at !opencnd?"
+CMD_ECHO>"ignore"
+PUSH_SG_CMD_RESPONSE_STR>"opencnd"
+POPUP_SG_SEND_CMD_STR>"at !opencnd="%s""
+CMD_SG_STATUS>"OK"
+#Modify "new-CND-Key" to real CND key going to set
+SEND_CMD>"at !setcnd="new-CND-key""
+CMD_ECHO>"ignore"
+END_CMD>
+
